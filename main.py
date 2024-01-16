@@ -38,24 +38,17 @@ sale3 = Sale(price=1200, date_sale='01-12-2020', id_stock=3, count=2)
 session.add_all([sale1, sale2, sale3])
 session.commit()
 
-def result():
-    query = session.query(Book).join(Stock).join(Shop).join(Sale).join(Publisher).filter(Publisher.id == res).all()
-    data = {}
-    for q in query:
-        data.setdefault(q.title, [])
-        for st in q.stock:
-            shop_name = st.shop.name
-            for c, pr in enumerate(st.sale):
-                price = pr.price
-                data[q.title].append({'shop_name': shop_name, 'price': price, 'date_sale': pr.date_sale})
-    for book in data.keys():
-        for item in data[book]:
-            shop_name = item['shop_name']
-            price = item['price']
-            date_sale = item['date_sale']
-            print(book + ' | ' + shop_name + ' | ' + str(price) + ' | ' + date_sale.strftime('%m-%d-%Y'))
+def get_shops(res):
+    query = session.query(
+        Book.title, Shop.name, Sale.price, Sale.date_sale,
+    ).select_from(Shop).join(Stock).join(Book).join(Publisher).join(Sale)
+    if res.isdigit():
+        query = query.filter(Publisher.id == res).all()
+    else:
+        query = query.filter(Publisher.name == res).all()
+    for title, name, price, date_sale in query:
+        print(f"{title: <20} | {name: <15} | {price: <5} | {date_sale.strftime('%d-%m-%Y')}")
 
 if __name__ == "__main__":
-    res = int(input('Введите Id издателя (1 или 2): '))
-    if res:
-        result()
+    res = input('Введите Id (1 или 2) или имя издателя (Питер или Азбука): ')
+    get_shops(res)
